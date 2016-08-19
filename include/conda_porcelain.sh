@@ -2,6 +2,7 @@
 source /eng/ssb/auto/astroconda/include/sysinfo.sh
 porcelain_continuum_url=https://repo.continuum.io/miniconda
 porcelain_continuum_script=Miniconda3-latest-${sysinfo_platform}-${sysinfo_arch}.sh
+porcelain_extra_config=/eng/ssb/auto/astroconda/etc/porcelain-extra
 PORCELAIN_ALREADY_DEAD=0
 PORCELAIN_SIGNALED=0
 
@@ -106,6 +107,27 @@ function porcelain_run_installer
         echo "Dying..."
         exit 1
     fi
+
+    # do extraneous package installation
+    porcelain_extra_install
+}
+
+function porcelain_extra_install
+{
+    if [[ -f $porcelain_extra_config ]]; then
+        porcelain_verify
+
+        while read pkg
+        do
+            if [[ $pkg == "" ]]; then
+                continue
+            elif [[ $pkg == "#"* ]]; then
+                continue
+            fi
+
+            conda install -y -q $pkg
+        done < $porcelain_extra_config
+    fi
 }
 
 function porcelain_deinit
@@ -129,14 +151,28 @@ function porcelain_deinit
 # thourough.
 function porcelain_signal
 {
+    # Obtain last return value
     retval=$?
+
+    # If error.sh recorded errors; use the count instead
+    if [[ -n $_E_COUNT ]] && [[ $_E_COUNT > 0 ]]; then
+        retval=$_E_COUNT
+    fi
+
+    # Already signaled, so die
     if [[ $PORCELAIN_SIGNALED != 0 ]]; then
-        exit $?
+        exit $retval
+    fi
+
+    # If error.sh has been activated; display error report
+    if [[ -n $_E_FLAGS ]] && [[ $_E_FLAGS != 0 ]]; then
+        echo '----'
+        error_report
     fi
 
     export PORCELAIN_SIGNALED=1
     porcelain_deinit
 
-    exit $?
+    exit $retval
 }
 

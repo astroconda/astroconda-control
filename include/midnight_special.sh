@@ -4,7 +4,9 @@
 source /eng/ssb/auto/astroconda/include/host_config.sh
 
 #[[ "$USER" != "" ]] && exec -c $0
-export sm_base="$PWD"
+if [[ -n $sm_run ]]; then
+    export sm_base="$PWD"
+fi
 
 unset $(/usr/bin/env \
     | egrep '^(\w+)=(.*)$' \

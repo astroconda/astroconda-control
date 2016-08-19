@@ -11,7 +11,7 @@ repo=http://ssb.stsci.edu/conda-dev
 source activate rt_${context}27
 
 # Update environment
-conda update -q -y --override-channels -c defaults -c $repo --all
+conda update -q -y --override-channels -c $repo -c defaults --all
 
 source /eng/ssb/auto/astroconda/include/post-common.sh
 
@@ -28,6 +28,8 @@ set -x
 [[ -d $LOGDIR ]] && [[ $LOGDIR != ^/$ ]] && rm -f "$LOGDIR/*"
 pushd $LOGDIR
     time pdkrun --parallel=${CPU_COUNT} -r "${tests[@]}"
+    retval=$?
 popd
 cat ${PDK_LOG}* | ssh iraf@ssb "irafdev ; pdk import -"
 
+exit $retval

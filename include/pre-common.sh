@@ -64,7 +64,7 @@ function svn_update()
 
         pushd "$elem" &>/dev/null
             echo "Updating $elem ..."
-            svn up --non-interactive --accept theirs-conflict
+            svn up --non-interactive --depth infinity --accept theirs-conflict
         popd &>/dev/null
         
     done

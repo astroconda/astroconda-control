@@ -5,6 +5,8 @@ source /eng/ssb/auto/astroconda/include/pre-common.sh
 repo_base=http://ssb.stsci.edu
 contexts=( dev public )
 versions=( 27 35 )
+tree_base=$(dirname $test_from)
+trees=( rt rtx )
 
 echo '----'
 echo 'Updating base installation:'
@@ -37,15 +39,21 @@ do
         fi
         echo '----'
         echo "Updating $context from $repo:"
-        conda update -q -y --override-channels -c defaults -c $repo -n $environ --all
+        conda update -q -y --override-channels -c $repo -c defaults -n $environ --all
         echo '----'
         echo "Forcing pandokia to exist:"
-        conda install -q -y --override-channels -c defaults -c $repo -n $environ pandokia
+        conda install -q -y --override-channels -c $repo -c defaults -n $environ pandokia
     done
 done
 
 echo '----'
 echo 'Updating regression tests:'
-svn_update `for d in /srv/rt/*; do [[ -d $d/.svn ]] && echo $d; done`
+for tree in "${trees[@]}"
+do
+    base="$tree_base/$tree"
+    if [[ -d $base/.svn ]]; then
+        svn_update $base
+    fi
+done
 echo '----'
 

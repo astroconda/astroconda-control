@@ -18,7 +18,6 @@ costools
 crds
 cube-tools
 d2to1
-decorator
 drizzle
 drizzlepac
 ds9
@@ -37,10 +36,8 @@ pandokia
 photutils
 poppy
 purge_path
-pydrizzle
 pyds9
 pyfftw
-pyneb
 pyqtgraph
 pyraf
 pyregion
@@ -52,7 +49,6 @@ reftools
 relic
 selenium
 shunit2
-specview
 specviz
 sphere
 sphinx_rtd_theme

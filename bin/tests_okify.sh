@@ -2,6 +2,8 @@
 source /eng/ssb/auto/astroconda/include/midnight_special.sh
 source /eng/ssb/auto/astroconda/include/pre-common.sh
 
+source activate pandokia
+
 if [ "$groupdir" = "" ]
 then
     groupdir=/eng/ssb
@@ -31,8 +33,12 @@ mv $h.ok $h.ok.process
 
 echo START
 
+set -x
+
 pdk ok -w $h.ok.process
 status=$?
+
+set +x
 
 echo END
 

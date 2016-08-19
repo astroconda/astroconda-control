@@ -30,7 +30,7 @@ export PDK_CONTEXT=$context:${PYTHON_VERSION}
 export PDK_LOG="$LOGDIR/${HOSTNAME}-$PDK_TESTRUN"
 
 echo '----'
-echo "Applying SHELL fix (thanks Continnum)..."
+echo "Applying SHELL fix (thanks Continuum)..."
 if [[ $SHELL == bash ]]; then
     export SHELL=/bin/bash
 elif [[ $SHELL == zsh ]]; then

@@ -28,10 +28,6 @@
 # exit regardless of exit method. Signals and general exit calls are ALL
 # handled equally.
 #
-# If you do, you will quickly fill up the partition. Builds can be as large
-# as 4GB, and potentially larger as time goes on. Don't be a doofus; always
-# run "porcelain_deinit". You have been warned.
-#
 # Never run a build outside of the "midnight_special" environment. The IRAF
 # account is a total mess. "midnight_special" performs a magical ritutal
 # that reassigns $HOME and effectively carpet bombs the original environment.
@@ -40,8 +36,10 @@
 
 source /eng/ssb/auto/astroconda/include/midnight_special.sh
 source /eng/ssb/auto/astroconda/include/sysinfo.sh
-source /eng/ssb/auto/astroconda/include/conda_porcelain.sh
+source /eng/ssb/auto/astroconda/include/error.sh
 source /eng/ssb/auto/astroconda/include/logger.sh
+source /eng/ssb/auto/astroconda/include/conda_porcelain.sh
+
 
 function warning_sleep
 {
@@ -52,7 +50,7 @@ function warning_sleep
 
     echo "YOU PROBABLY DO NOT WANT THIS!"
     echo "Sleeping for $wtime second(s) just in case."
-    #sleep $wtime
+    sleep $wtime
     echo "Continuing..."
 }
 
@@ -65,12 +63,16 @@ function repo_transfer
 
     if [[ -z $path ]]; then
         echo "transfer_repo requires a path."
+        error_set _E_FLAG_FAILED
+        error_set _E_FLAG_BAD_ARGUMENT
         exit 1
     fi
 
     if [[ $path == *${repo_arch} ]]; then
         echo "tranfer_repo received an invalid path: $path"
         echo "(Remove the trailing /$repo_arch)"
+        error_set _E_FLAG_FAILED
+        error_set _E_FLAG_BAD_ARGUMENT
         exit 1
     fi
 
@@ -83,7 +85,8 @@ function repo_transfer
 
     retval=$?
     if [[ $retval > 0 ]]; then
-        exit $?
+        error_set _E_FLAG_BAD_RETVAL
+        return $?
     fi
 }
 
@@ -92,11 +95,13 @@ function repo_index
     local path="$1"
     if [[ -z $path ]]; then
         echo "index_repo requires a path"
+        error_set _E_FLAG_BAD_ARGUMENT
         exit 1
     fi
 
     if [[ ! -d $path ]]; then
         echo "$path does not exist."
+        error_set _E_FLAG_BAD_ARGUMENT
         exit 1
     fi
 
@@ -105,7 +110,8 @@ function repo_index
 
     retval=$?
     if [[ $retval > 0 ]]; then
-        exit $retval
+        error_set _E_FLAG_BAD_RETVAL
+        return $retval
     fi
 }
 
@@ -317,6 +323,7 @@ pushd "$PORCELAIN_PREFIX"
     conda install --yes --quiet conda-build=1.18.1 conda=3.19.1
     if [[ $? > 0 ]]; then
         echo "Unable to install conda-build, so stopping."
+        error_set _E_FLAG_HALT_AND_CATCH_FIRE
         exit 1
     fi
     echo
@@ -324,6 +331,7 @@ pushd "$PORCELAIN_PREFIX"
     git clone $repo_git
     if [[ $? > 0 ]]; then
         echo "Unable to clone recipe repository $repo_git, so stopping."
+        error_set _E_FLAG_HALT_AND_CATCH_FIRE
         exit 1
     fi
     echo
@@ -337,6 +345,10 @@ pushd "$PORCELAIN_PREFIX"
                 fi
 
                 logger $LOGDIR/${pkg}.log $build_command $pkg
+
+                if [[ $? > 0 ]]; then
+                    error_set _E_FLAG_BAD_PACKAGE
+                fi
             done
         else
             # Pretty much the worst thing you could ever WANT to do...
@@ -344,17 +356,23 @@ pushd "$PORCELAIN_PREFIX"
             for pkg in *
             do
                 [[ ! -f $pkg/meta.yaml ]] && continue
+
                 logger $LOGDIR/${pkg}.log $build_command $pkg
+
+                if [[ $? > 0 ]]; then
+                    error_set _E_FLAG_BAD_PACKAGE
+                fi
             done
         fi
 
         echo '----'
         logger repo_transfer.log repo_transfer "$repo_deposit"
+
         echo '----'
         logger repo_index.log repo_index "$repo_deposit/$repo_arch"
+
         echo '----'
     popd
 popd
 
 porcelain_deinit
-

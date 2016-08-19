@@ -1,5 +1,6 @@
 #!/bin/bash
 source /eng/ssb/auto/astroconda/include/midnight_special.sh
+source /eng/ssb/auto/astroconda/include/error.sh
 source /eng/ssb/auto/astroconda/include/conda_porcelain.sh
 source /eng/ssb/auto/astroconda/include/texlive.sh
 
@@ -20,8 +21,8 @@ pushd "$PORCELAIN_PREFIX"
         --yes \
         --quiet \
         --override-channels \
-        -c defaults \
-        -c $repo_conda sphinx=1.3.5 jwst stsci.sphinxext
+        -c $repo_conda \
+        -c defaults sphinx=1.3.5 jwst stsci.sphinxext
 
     source activate $build_env
 
